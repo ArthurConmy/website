@@ -1,18 +1,16 @@
-on: [push]
+name: CI
+on: push
 
 jobs:
-  deploy_job:
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
-    name: deploy
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: deploy file
-        uses: wlixcc/SFTP-Deploy-Action@v1.0
-        with:
-          username: 'asc70'
-          server: 'srcf.net'
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }} 
-          local_path: '/home/arthur/public_html'
-          remote_path: '/public_html'
-          args: '-o ConnectTimeout=5'
+      - name: SSH to pip
+        if: github.ref == 'refs/heads/release'
+        run: |
+          umask 0077
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
+          echo "${{ secrets.SSH_HOST_KEY }}" > $HOME/.ssh/known_hosts
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} /path/to/upgrade/script.sh
